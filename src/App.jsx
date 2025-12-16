@@ -128,7 +128,6 @@ function ChatWindow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
-  const messagesContainerRef = useRef(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -150,7 +149,6 @@ function ChatWindow() {
     setMessages(prev => [...prev, userMsg, agentPlaceholder]);
 
     try {
-      // Build the request payload
       const payload = {
         messages: [{ role: "user", content: text }],
         runId: "weatherAgent",
@@ -163,199 +161,114 @@ function ChatWindow() {
         resourceId: "weatherAgent"
       };
 
-      console.log("Sending request with payload:", payload);
-
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const response = await fetch(
-        "https://brief-thousands-sunset-9fcb1c78-485f-4967-ac04-2759a8fa1462.mastra.cloud/api/agents/weatherAgent/stream",
-        {
-          method: "POST",
-          headers: {
-            "Accept": "text/event-stream, application/json, */*",
-            "Content-Type": "application/json",
-            "x-mastra-dev-playground": "true"
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-          mode: 'cors',
-          credentials: 'omit'
-        }
-      );
+      const response = await fetch("/api/agents/weatherAgent/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
 
       clearTimeout(timeoutId);
 
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        console.error("Error response:", errorText);
         throw new Error(`API error (${response.status}): ${errorText || 'Server returned an error'}`);
       }
-
-      // Handle streaming response
-      const contentType = response.headers.get('content-type');
-      console.log("Content-Type:", contentType);
 
       if (response.body && response.body.getReader) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let hasContent = false;
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              console.log("Stream complete");
-              break;
-            }
-            
-            buffer += decoder.decode(value, { stream: true });
-            console.log("Received chunk, buffer length:", buffer.length);
-            
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || "";
 
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine || trimmedLine.startsWith(':')) continue;
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine || trimmedLine.startsWith(':')) continue;
+            
+            if (trimmedLine.startsWith('data:')) {
+              const data = trimmedLine.slice(5).trim();
               
-              console.log("Processing line:", trimmedLine);
+              if (data === '[DONE]') continue;
               
-              if (trimmedLine.startsWith('data:')) {
-                const data = trimmedLine.slice(5).trim();
+              try {
+                const parsed = JSON.parse(data);
+                let textToAppend = "";
                 
-                if (data === '[DONE]') {
-                  console.log("Received [DONE] signal");
-                  continue;
+                if (typeof parsed === 'string') {
+                  textToAppend = parsed;
+                } else if (parsed.content) {
+                  textToAppend = parsed.content;
+                } else if (parsed.text) {
+                  textToAppend = parsed.text;
+                } else if (parsed.delta) {
+                  textToAppend = parsed.delta;
+                } else if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                  textToAppend = parsed.choices[0].delta.content;
                 }
                 
-                try {
-                  const parsed = JSON.parse(data);
-                  console.log("Parsed data:", parsed);
-                  
-                  let textToAppend = "";
-                  
-                  // Handle various response formats
-                  if (typeof parsed === 'string') {
-                    textToAppend = parsed;
-                  } else if (parsed.content) {
-                    textToAppend = parsed.content;
-                  } else if (parsed.text) {
-                    textToAppend = parsed.text;
-                  } else if (parsed.delta) {
-                    textToAppend = parsed.delta;
-                  } else if (parsed.choices && parsed.choices[0]?.delta?.content) {
-                    textToAppend = parsed.choices[0].delta.content;
-                  } else if (parsed.message?.content) {
-                    textToAppend = parsed.message.content;
-                  }
-                  
-                  if (textToAppend) {
-                    hasContent = true;
-                    setMessages(prev => {
-                      const copy = [...prev];
-                      const last = copy[copy.length - 1];
-                      copy[copy.length - 1] = {
-                        ...last,
-                        content: (last.content || "") + textToAppend,
-                        loading: false
-                      };
-                      return copy;
-                    });
-                  }
-                } catch (parseError) {
-                  console.log("Non-JSON data, treating as text:", data);
-                  if (data && data !== '[DONE]') {
-                    hasContent = true;
-                    setMessages(prev => {
-                      const copy = [...prev];
-                      const last = copy[copy.length - 1];
-                      copy[copy.length - 1] = {
-                        ...last,
-                        content: (last.content || "") + data,
-                        loading: false
-                      };
-                      return copy;
-                    });
-                  }
+                if (textToAppend) {
+                  setMessages(prev => {
+                    const copy = [...prev];
+                    const last = copy[copy.length - 1];
+                    copy[copy.length - 1] = {
+                      ...last,
+                      content: (last.content || "") + textToAppend,
+                      loading: false
+                    };
+                    return copy;
+                  });
                 }
-              } else if (trimmedLine) {
-                // Line without 'data:' prefix
-                console.log("Line without data prefix:", trimmedLine);
+              } catch (e) {
+                if (data && data !== '[DONE]') {
+                  setMessages(prev => {
+                    const copy = [...prev];
+                    const last = copy[copy.length - 1];
+                    copy[copy.length - 1] = {
+                      ...last,
+                      content: (last.content || "") + data,
+                      loading: false
+                    };
+                    return copy;
+                  });
+                }
               }
             }
           }
-
-          // Process remaining buffer
-          if (buffer.trim()) {
-            console.log("Processing remaining buffer:", buffer);
-            hasContent = true;
-            setMessages(prev => {
-              const copy = [...prev];
-              const last = copy[copy.length - 1];
-              copy[copy.length - 1] = {
-                ...last,
-                content: (last.content || "") + buffer.trim(),
-                loading: false
-              };
-              return copy;
-            });
-          }
-
-          // If no content received, show error
-          if (!hasContent) {
-            throw new Error("No response received from the weather agent");
-          }
-        } catch (streamError) {
-          console.error("Stream reading error:", streamError);
-          throw streamError;
         }
-      } else {
-        // Fallback: read full response as text
-        console.log("No streaming support, reading full response");
-        const fullText = await response.text();
-        console.log("Full response text:", fullText);
-        
-        setMessages(prev => {
-          const copy = [...prev];
-          copy[copy.length - 1] = {
-            ...copy[copy.length - 1],
-            content: fullText || "No response received",
-            loading: false
-          };
-          return copy;
-        });
+
+        if (buffer.trim()) {
+          setMessages(prev => {
+            const copy = [...prev];
+            const last = copy[copy.length - 1];
+            copy[copy.length - 1] = {
+              ...last,
+              content: (last.content || "") + buffer.trim(),
+              loading: false
+            };
+            return copy;
+          });
+        }
       }
     } catch (err) {
-      console.error("Error details:", err);
-      console.error("Error name:", err.name);
-      console.error("Error message:", err.message);
-      
-      let errorMessage = "Failed to connect to weather service. ";
-      
-      if (err.name === 'AbortError') {
-        errorMessage = "Request timed out. The weather service took too long to respond.";
-      } else if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
-        errorMessage = "Cannot connect to weather service. This could be due to:\n" +
-                      "• CORS restrictions (the API may not allow browser requests)\n" +
-                      "• Network connectivity issues\n" +
-                      "• The API endpoint may be temporarily unavailable\n\n" +
-                      "💡 Tip: Contact your instructor or check if the API requires a proxy server.";
-      } else {
-        errorMessage = err.message || "An unknown error occurred";
-      }
-      
-      setError(errorMessage);
+      console.error("Error:", err);
+      setError(err.message || "Failed to fetch response");
       setMessages(prev => {
         const copy = [...prev];
         copy[copy.length - 1] = {
           role: "agent",
-          content: "I apologize, but I'm having trouble connecting to the weather service right now. This appears to be a network or API configuration issue.\n\n" +
-                  "If you're the developer: Check the browser console for detailed error information.",
+          content: "Sorry, I couldn't get the weather information right now. Please check your connection and try again.",
           timestamp: new Date().toISOString(),
           error: true
         };
@@ -400,7 +313,7 @@ function ChatWindow() {
         </button>
       </div>
 
-      <div ref={messagesContainerRef} className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
         {messages.map((message, index) => (
           <MessageBubble
             key={`${message.timestamp}-${index}`}
