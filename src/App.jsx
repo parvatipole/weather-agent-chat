@@ -414,7 +414,6 @@ function ChatWindow() {
             </div>
           </div>
         )}
-      </div>
 
         {focusMode && showHistory && previousMessages.length > 0 && (
           <div className="history-drawer">
@@ -442,7 +441,7 @@ function ChatWindow() {
           </div>
         )}
 
-      <div className={`messages-area ${focusMode ? 'focus-messages' : ''}`}>
+        <div className={`messages-area ${focusMode ? 'focus-messages' : ''}`}>
         {focusMode && lastAgentMessage ? (
           <MessageBubble
             key={`focus-${lastAgentMessage.timestamp}`}
@@ -486,15 +485,16 @@ function ChatWindow() {
           </div>
         )}
 
-        <div ref={messagesEndRef} />
-      </div>
+          <div ref={messagesEndRef} />
+        </div>
 
-      <ChatInput
-        onSend={sendMessage}
-        disabled={loading}
-        placeholder={loading ? "Getting weather information..." : "Ask about weather..."}
-        focusMode={focusMode}
-      />
+        <ChatInput
+          onSend={sendMessage}
+          disabled={loading}
+          placeholder={loading ? "Getting weather information..." : "Ask about weather..."}
+          focusMode={focusMode}
+        />
+      </div>
     </div>
   );
 }
