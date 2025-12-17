@@ -416,31 +416,31 @@ function ChatWindow() {
         )}
       </div>
 
-      {focusMode && showHistory && previousMessages.length > 0 && (
-        <div className="history-drawer">
-          <div className="history-header">
-            <h3>Chat History ({previousMessages.length})</h3>
-            <button
-              onClick={() => setShowHistory(false)}
-              className="close-history"
-              aria-label="Close history drawer"
-            >
-              ✕
-            </button>
+        {focusMode && showHistory && previousMessages.length > 0 && (
+          <div className="history-drawer">
+            <div className="history-header">
+              <h3>Chat History ({previousMessages.length})</h3>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="close-history"
+                aria-label="Close history drawer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="history-messages">
+              {previousMessages.map((message, index) => (
+                <div key={`history-${message.timestamp}-${index}`} className="history-message">
+                  <span className="history-role">{message.role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
+                  <p className="history-text">{message.content}</p>
+                  <span className="history-time">
+                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="history-messages">
-            {previousMessages.map((message, index) => (
-              <div key={`history-${message.timestamp}-${index}`} className="history-message">
-                <span className="history-role">{message.role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
-                <p className="history-text">{message.content}</p>
-                <span className="history-time">
-                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
 
       <div className={`messages-area ${focusMode ? 'focus-messages' : ''}`}>
         {focusMode && lastAgentMessage ? (
