@@ -426,10 +426,11 @@
 
 /* Input container */
 .input-container {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.8) 100%);
-  padding: 1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.6) 100%);
+  padding: 1.5rem 2rem;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
 }
 
 .input-wrapper {
