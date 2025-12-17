@@ -1136,13 +1136,15 @@ mark.highlight-weather {
   }
 
   .focus-toggle-button,
-  .history-toggle-button {
+  .history-toggle-button,
+  .history-sidebar-toggle {
     width: 40px;
     height: 40px;
   }
 
   .focus-icon,
-  .history-icon {
+  .history-icon,
+  .history-sidebar-icon {
     width: 18px;
     height: 18px;
   }
@@ -1181,6 +1183,38 @@ mark.highlight-weather {
 
   .history-messages {
     padding: 0.875rem 1.25rem;
+  }
+
+  /* History sidebar on mobile */
+  .history-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 100;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .sidebar-header h3 {
+    font-size: 1rem;
+  }
+
+  .sidebar-messages {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .sidebar-message {
+    padding: 0.75rem;
+  }
+
+  .sidebar-text {
+    font-size: 0.8125rem;
   }
 }
 
