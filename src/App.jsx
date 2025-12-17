@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 
 // ChatInput Component
-function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather..." }) {
+function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather...", focusMode = false }) {
   const [text, setText] = useState("");
   const textareaRef = useRef(null);
 
@@ -29,18 +29,19 @@ function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather.
   };
 
   return (
-    <div className="input-container">
+    <div className={`input-container ${focusMode ? 'focus-input' : ''}`}>
       <div className="input-wrapper">
         <div className="input-field">
           <textarea
             ref={textareaRef}
-            className={`message-textarea ${disabled ? 'disabled' : ''}`}
+            className={`message-textarea ${disabled ? 'disabled' : ''} ${focusMode ? 'focus-textarea' : ''}`}
             placeholder={placeholder}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
-            rows={1}
+            rows={focusMode ? 4 : 1}
+            aria-label="Type your message here"
           />
           {text.length > 500 && (
             <div className="char-count">
@@ -51,8 +52,9 @@ function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather.
         <button
           onClick={handleSend}
           disabled={disabled || !text.trim()}
-          className={`send-button ${disabled || !text.trim() ? 'disabled' : ''}`}
+          className={`send-button ${disabled || !text.trim() ? 'disabled' : ''} ${focusMode ? 'focus-send' : ''}`}
           title={disabled ? "Please wait..." : "Send message (Enter)"}
+          aria-label={disabled ? "Please wait for response" : "Send message"}
         >
           {disabled ? (
             <div className="spinner"></div>
