@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import './App.css';
 
 // ChatInput Component
 function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather..." }) {
@@ -28,12 +29,12 @@ function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather.
   };
 
   return (
-    <div className="p-4 border-t bg-gray-50 rounded-b-lg">
-      <div className="flex items-end gap-3">
-        <div className="flex-1 relative">
+    <div className="input-container">
+      <div className="input-wrapper">
+        <div className="input-field">
           <textarea
             ref={textareaRef}
-            className={`w-full resize-none border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'} min-h-[44px] max-h-32`}
+            className={`message-textarea ${disabled ? 'disabled' : ''}`}
             placeholder={placeholder}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -42,7 +43,7 @@ function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather.
             rows={1}
           />
           {text.length > 500 && (
-            <div className="absolute bottom-1 right-3 text-xs text-gray-400">
+            <div className="char-count">
               {text.length}/1000
             </div>
           )}
@@ -50,21 +51,21 @@ function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather.
         <button
           onClick={handleSend}
           disabled={disabled || !text.trim()}
-          className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-md ${disabled || !text.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg'}`}
+          className={`send-button ${disabled || !text.trim() ? 'disabled' : ''}`}
           title={disabled ? "Please wait..." : "Send message (Enter)"}
         >
           {disabled ? (
-            <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            <div className="spinner"></div>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           )}
         </button>
       </div>
-      <div className="mt-2 text-xs text-gray-500 flex justify-between items-center">
+      <div className="input-helper">
         <span>Press Enter to send, Shift+Enter for new line</span>
-        {disabled && <span className="text-blue-500">Getting response...</span>}
+        {disabled && <span className="sending-indicator">Getting response...</span>}
       </div>
     </div>
   );
@@ -80,36 +81,32 @@ function MessageBubble({ message, isLoading = false }) {
     : "";
 
   return (
-    <div className={`flex gap-3 mb-4 ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`message-group ${isUser ? 'user-message' : 'agent-message'}`}>
       {!isUser && (
-        <div className="flex-shrink-0">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-sm">
-            <span className="text-white text-sm">🤖</span>
-          </div>
+        <div className="message-avatar agent-avatar">
+          <div className="avatar-icon">🤖</div>
         </div>
       )}
-      <div className={`flex flex-col max-w-[75%] sm:max-w-[60%] ${isUser ? "items-end" : "items-start"}`}>
-        <div className={`px-4 py-3 rounded-2xl shadow-sm relative ${isUser ? "bg-blue-500 text-white rounded-br-md" : isError ? "bg-red-50 text-red-800 border border-red-200 rounded-bl-md" : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"} ${isLoading ? "animate-pulse" : ""}`}>
+      <div className={`message-content ${isUser ? 'user-content' : 'agent-content'}`}>
+        <div className={`message-bubble ${isError ? 'error-bubble' : isUser ? 'user-bubble' : 'agent-bubble'} ${isLoading ? 'loading' : ''}`}>
           {isLoading && (
-            <div className="flex items-center space-x-1 mb-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="loading-dots">
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           )}
-          <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+          <div className="message-text">
             {message.content || (isLoading ? "Thinking..." : "")}
           </div>
         </div>
-        <div className={`text-xs text-gray-500 mt-1 px-2 ${isUser ? "text-right" : "text-left"}`}>
+        <div className={`message-time ${isUser ? 'user-time' : ''}`}>
           {formattedTime}
         </div>
       </div>
       {isUser && (
-        <div className="flex-shrink-0">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-sm">
-            <span className="text-white text-sm">👤</span>
-          </div>
+        <div className="message-avatar user-avatar">
+          <div className="avatar-icon">👤</div>
         </div>
       )}
     </div>
@@ -291,29 +288,27 @@ function ChatWindow() {
   };
 
   return (
-    <div className="w-full max-w-2xl h-[90vh] bg-white shadow-xl rounded-lg flex flex-col mx-auto">
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-lg">🌤️</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-800">Weather Assistant</h1>
-            <p className="text-sm text-gray-600">Ask me about the weather anywhere</p>
+    <div className="chat-container">
+      <div className="chat-header">
+        <div className="header-content">
+          <div className="header-icon">🌤️</div>
+          <div className="header-text">
+            <h1 className="header-title">Weather Assistant</h1>
+            <p className="header-subtitle">Ask me about the weather anywhere</p>
           </div>
         </div>
         <button
           onClick={clearChat}
-          className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+          className="clear-button"
           title="Clear chat"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="clear-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 min-h-0">
+      <div className="messages-area">
         {messages.map((message, index) => (
           <MessageBubble
             key={`${message.timestamp}-${index}`}
@@ -323,27 +318,25 @@ function ChatWindow() {
         ))}
 
         {error && (
-          <div className="flex justify-center">
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg max-w-md">
-              <div className="flex items-start">
-                <svg className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-2">{error}</p>
-                  <button
-                    onClick={() => {
-                      setError(null);
-                      const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
-                      if (lastUserMessage) {
-                        sendMessage(lastUserMessage.content);
-                      }
-                    }}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium underline"
-                  >
-                    Try again
-                  </button>
-                </div>
+          <div className="error-notification">
+            <div className="error-content">
+              <svg className="error-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div className="error-text">
+                <p className="error-message">{error}</p>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+                    if (lastUserMessage) {
+                      sendMessage(lastUserMessage.content);
+                    }
+                  }}
+                  className="error-retry"
+                >
+                  Try again
+                </button>
               </div>
             </div>
           </div>
@@ -364,11 +357,9 @@ function ChatWindow() {
 // Main App Component
 export default function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-4 px-4">
-      <div className="max-w-6xl mx-auto h-full">
-        <div className="flex items-center justify-center min-h-[calc(100vh-2rem)]">
-          <ChatWindow />
-        </div>
+    <div className="app-background">
+      <div className="app-container">
+        <ChatWindow />
       </div>
     </div>
   );
