@@ -322,52 +322,98 @@ function ChatWindow() {
 
   return (
     <div className={`chat-container ${focusMode ? 'focus-mode-active' : ''}`}>
-      <div className="chat-header">
-        <div className="header-content">
-          <div className="header-icon">🌤️</div>
-          <div className="header-text">
-            <h1 className="header-title">Weather Assistant</h1>
-            <p className="header-subtitle">Ask me about the weather anywhere</p>
+      <div className="chat-wrapper">
+        <div className="chat-header">
+          <div className="header-content">
+            <div className="header-icon">🌤️</div>
+            <div className="header-text">
+              <h1 className="header-title">Weather Assistant</h1>
+              <p className="header-subtitle">Ask me about the weather anywhere</p>
+            </div>
           </div>
-        </div>
-        <div className="header-actions">
-          <button
-            onClick={() => setFocusMode(!focusMode)}
-            className={`focus-toggle-button ${focusMode ? 'active' : ''}`}
-            title={focusMode ? "Disable Inclusive Focus Mode" : "Enable Inclusive Focus Mode (for PWD)"}
-            aria-label={focusMode ? "Disable accessible focus mode" : "Enable accessible focus mode"}
-            aria-pressed={focusMode}
-          >
-            <svg className="focus-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          </button>
-          {focusMode && previousMessages.length > 0 && (
+          <div className="header-actions">
+            {!focusMode && messages.length > 1 && (
+              <button
+                onClick={() => setShowHistorySidebar(!showHistorySidebar)}
+                className={`history-sidebar-toggle ${showHistorySidebar ? 'active' : ''}`}
+                title={showHistorySidebar ? "Hide chat history" : "Show chat history"}
+                aria-label={showHistorySidebar ? "Hide chat history sidebar" : "Show chat history sidebar"}
+                aria-pressed={showHistorySidebar}
+              >
+                <span className="history-badge">{messages.length - 1}</span>
+                <svg className="history-sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+            )}
             <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="history-toggle-button"
-              title={showHistory ? "Hide chat history" : "Show chat history"}
-              aria-label={showHistory ? "Hide previous messages" : "Show previous messages"}
-              aria-pressed={showHistory}
+              onClick={() => setFocusMode(!focusMode)}
+              className={`focus-toggle-button ${focusMode ? 'active' : ''}`}
+              title={focusMode ? "Disable Inclusive Focus Mode" : "Enable Inclusive Focus Mode (for PWD)"}
+              aria-label={focusMode ? "Disable accessible focus mode" : "Enable accessible focus mode"}
+              aria-pressed={focusMode}
             >
-              <span className="history-count">{previousMessages.length}</span>
-              <svg className="history-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="focus-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </button>
-          )}
-          <button
-            onClick={clearChat}
-            className="clear-button"
-            title="Clear chat"
-            aria-label="Clear all messages"
-          >
-            <svg className="clear-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+            {focusMode && previousMessages.length > 0 && (
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="history-toggle-button"
+                title={showHistory ? "Hide chat history" : "Show chat history"}
+                aria-label={showHistory ? "Hide previous messages" : "Show previous messages"}
+                aria-pressed={showHistory}
+              >
+                <span className="history-count">{previousMessages.length}</span>
+                <svg className="history-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={clearChat}
+              className="clear-button"
+              title="Clear chat"
+              aria-label="Clear all messages"
+            >
+              <svg className="clear-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {showHistorySidebar && !focusMode && messages.length > 1 && (
+          <div className="history-sidebar">
+            <div className="sidebar-header">
+              <h3>Chat History</h3>
+              <button
+                onClick={() => setShowHistorySidebar(false)}
+                className="sidebar-close"
+                aria-label="Close sidebar"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="sidebar-messages">
+              {messages.slice(0, -1).reverse().map((message, index) => (
+                <div key={`sidebar-${message.timestamp}-${index}`} className="sidebar-message">
+                  <div className="sidebar-message-header">
+                    <span className="sidebar-role">
+                      {message.role === 'user' ? '👤 You' : '🤖 Assistant'}
+                    </span>
+                    <span className="sidebar-time">
+                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="sidebar-text">{message.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {focusMode && showHistory && previousMessages.length > 0 && (
