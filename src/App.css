@@ -684,6 +684,21 @@
 
 /* ============ INCLUSIVE FOCUS MODE STYLES ============ */
 
+/* Chat container layout */
+.chat-container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+}
+
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+}
+
 /* Header actions container */
 .header-actions {
   display: flex;
