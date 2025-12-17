@@ -153,6 +153,7 @@ function ChatWindow() {
   const [error, setError] = useState(null);
   const [focusMode, setFocusMode] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = useCallback(() => {
