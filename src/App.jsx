@@ -71,24 +71,45 @@ function ChatInput({ onSend, disabled = false, placeholder = "Ask about weather.
   );
 }
 
+// Helper function to highlight keywords in message text
+function highlightKeywords(text) {
+  if (!text) return text;
+
+  // Keyword patterns for highlighting
+  const patterns = [
+    { regex: /\b(?:Delhi|Mumbai|Bangalore|Hyderabad|Chennai|Kolkata|Pune|Ahmedabad|Jaipur|Lucknow|London|New York|Paris|Tokyo|Sydney|Toronto|Dubai|Singapore|Hong Kong|Bangkok|Seoul|Bangkok|Mexico City|Berlin|Madrid|Rome|Amsterdam|Bangkok|Istanbul|Cairo|Bangkok|Moscow|Dubai|Bangkok|Bangkok|Bangkok|Bangkok)\b/gi, class: 'highlight-city' },
+    { regex: /(\d+)(?:°C|°F|°|C|F)/g, class: 'highlight-temp' },
+    { regex: /\b(?:rain|raining|rainfall|rainy|storm|storms|thunder|thunderstorm|snow|snowing|sunny|sunny|cloudy|cloud|clouds|fog|foggy|hail|drizzle|windy|wind|hurricane|tornado|cyclone|monsoon)\b/gi, class: 'highlight-weather' },
+  ];
+
+  let highlightedText = text;
+  patterns.forEach(({ regex, class: className }) => {
+    highlightedText = highlightedText.replace(regex, (match) => `<mark class="${className}">${match}</mark>`);
+  });
+
+  return highlightedText;
+}
+
 // MessageBubble Component
-function MessageBubble({ message, isLoading = false }) {
+function MessageBubble({ message, isLoading = false, focusMode = false }) {
   const isUser = message.role === "user";
   const isError = message.error;
 
-  const formattedTime = message.timestamp 
+  const formattedTime = message.timestamp
     ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : "";
 
+  const highlightedContent = focusMode && !isUser ? highlightKeywords(message.content || "") : null;
+
   return (
-    <div className={`message-group ${isUser ? 'user-message' : 'agent-message'}`}>
+    <div className={`message-group ${isUser ? 'user-message' : 'agent-message'} ${focusMode ? 'focus-mode' : ''}`}>
       {!isUser && (
         <div className="message-avatar agent-avatar">
-          <div className="avatar-icon">🤖</div>
+          <div className="avatar-icon" aria-label="Weather assistant">🤖</div>
         </div>
       )}
       <div className={`message-content ${isUser ? 'user-content' : 'agent-content'}`}>
-        <div className={`message-bubble ${isError ? 'error-bubble' : isUser ? 'user-bubble' : 'agent-bubble'} ${isLoading ? 'loading' : ''}`}>
+        <div className={`message-bubble ${isError ? 'error-bubble' : isUser ? 'user-bubble' : 'agent-bubble'} ${isLoading ? 'loading' : ''} ${focusMode ? 'focus-bubble' : ''}`}>
           {isLoading && (
             <div className="loading-dots">
               <span></span>
@@ -97,7 +118,11 @@ function MessageBubble({ message, isLoading = false }) {
             </div>
           )}
           <div className="message-text">
-            {message.content || (isLoading ? "Thinking..." : "")}
+            {focusMode && !isUser && highlightedContent ? (
+              <div dangerouslySetInnerHTML={{ __html: highlightedContent }} />
+            ) : (
+              message.content || (isLoading ? "Thinking..." : "")
+            )}
           </div>
         </div>
         <div className={`message-time ${isUser ? 'user-time' : ''}`}>
@@ -106,7 +131,7 @@ function MessageBubble({ message, isLoading = false }) {
       </div>
       {isUser && (
         <div className="message-avatar user-avatar">
-          <div className="avatar-icon">👤</div>
+          <div className="avatar-icon" aria-label="You">👤</div>
         </div>
       )}
     </div>
