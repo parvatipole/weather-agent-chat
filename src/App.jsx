@@ -177,21 +177,14 @@ function ChatWindow() {
 
     try {
       const payload = {
-        messages: [{ role: "user", content: text }],
-        runId: "weatherAgent",
-        maxRetries: 2,
-        maxSteps: 5,
-        temperature: 0.5,
-        topP: 1,
-        runtimeContext: {},
-        threadId: `thread-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        resourceId: "weatherAgent"
+        prompt: text,
+        stream: false
       };
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const response = await fetch("/api/agents/weatherAgent/stream", {
+      const response = await fetch("https://api-dev.provue.ai/api/webapp/agent/test-agent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -207,87 +200,33 @@ function ChatWindow() {
         throw new Error(`API error (${response.status}): ${errorText || 'Server returned an error'}`);
       }
 
-      if (response.body && response.body.getReader) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+      const data = await response.json();
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine || trimmedLine.startsWith(':')) continue;
-            
-            if (trimmedLine.startsWith('data:')) {
-              const data = trimmedLine.slice(5).trim();
-              
-              if (data === '[DONE]') continue;
-              
-              try {
-                const parsed = JSON.parse(data);
-                let textToAppend = "";
-                
-                if (typeof parsed === 'string') {
-                  textToAppend = parsed;
-                } else if (parsed.content) {
-                  textToAppend = parsed.content;
-                } else if (parsed.text) {
-                  textToAppend = parsed.text;
-                } else if (parsed.delta) {
-                  textToAppend = parsed.delta;
-                } else if (parsed.choices && parsed.choices[0]?.delta?.content) {
-                  textToAppend = parsed.choices[0].delta.content;
-                }
-                
-                if (textToAppend) {
-                  setMessages(prev => {
-                    const copy = [...prev];
-                    const last = copy[copy.length - 1];
-                    copy[copy.length - 1] = {
-                      ...last,
-                      content: (last.content || "") + textToAppend,
-                      loading: false
-                    };
-                    return copy;
-                  });
-                }
-              } catch (e) {
-                if (data && data !== '[DONE]') {
-                  setMessages(prev => {
-                    const copy = [...prev];
-                    const last = copy[copy.length - 1];
-                    copy[copy.length - 1] = {
-                      ...last,
-                      content: (last.content || "") + data,
-                      loading: false
-                    };
-                    return copy;
-                  });
-                }
-              }
-            }
-          }
-        }
-
-        if (buffer.trim()) {
-          setMessages(prev => {
-            const copy = [...prev];
-            const last = copy[copy.length - 1];
-            copy[copy.length - 1] = {
-              ...last,
-              content: (last.content || "") + buffer.trim(),
-              loading: false
-            };
-            return copy;
-          });
-        }
+      let agentResponse = "";
+      if (typeof data === 'string') {
+        agentResponse = data;
+      } else if (data.response) {
+        agentResponse = data.response;
+      } else if (data.result) {
+        agentResponse = data.result;
+      } else if (data.message) {
+        agentResponse = data.message;
+      } else if (data.content) {
+        agentResponse = data.content;
+      } else {
+        agentResponse = JSON.stringify(data);
       }
+
+      setMessages(prev => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        copy[copy.length - 1] = {
+          ...last,
+          content: agentResponse,
+          loading: false
+        };
+        return copy;
+      });
     } catch (err) {
       console.error("Error:", err);
       setError(err.message || "Failed to fetch response");
