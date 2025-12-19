@@ -18,6 +18,7 @@ A responsive chat interface built with React 19 that connects to a weather agent
 
 ### Installation
 ```bash
+clone this github repository using git clone https://github.com/parvatipole/weather-agent-chat
 npm install
 npm run dev
 ```
